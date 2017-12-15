@@ -6,6 +6,12 @@ let scoreTimer = setInterval(increaseScore, 5000);
 let levelTimer = setInterval(increaseLevel, 50000);
 let enemyCreationTimer = setInterval(createNewEnemy, 10000);
 let barrierCreationTimer = setInterval(createNewBarrier, 10000);
+function stopTimers (){
+  clearInterval(scoreTimer);
+   clearInterval(levelTimer);
+   clearInterval(enemyCreationTimer);
+   clearInterval(barrierCreationTimer);
+}
 function resetTimers (){
   scoreTimer = setInterval(increaseScore, 5000);
   levelTimer = setInterval(increaseLevel, 50000);
@@ -154,12 +160,21 @@ function pushOff(c1, c2) {
   }
 }
 
-function updateScene() {
-  moveToward(mouse, player, player.speed);
-  enemies.forEach(enemy => moveToward(player, enemy, enemy.speed));
+function detectCollisions (){
   for (let i = 0; i < enemies.length; i++) {
     for (let j = i + 1; j < enemies.length; j++) {
       pushOff(enemies[i], enemies[j]);
+    }
+  }
+  for (let i = 0; i < barriers.length; i++) {
+    for (let j = i + 1; j < barriers.length; j++) {
+      pushOff(barriers[i], barriers[j]);
+    }
+  }
+  for (let i = 0; i < enemies.length; i++) {
+    for (let j = 0; j < barriers.length; j++) {
+      pushOff(enemies[i], barriers[j]);
+      pushOff(barriers[j], enemies[i]);
     }
   }
   enemies.forEach(enemy => {
@@ -174,26 +189,32 @@ function updateScene() {
   });
 }
 
+function updateScene() {
+  moveToward(mouse, player, player.speed);
+  enemies.forEach(enemy => moveToward(player, enemy, enemy.speed));
+  detectCollisions();
+}
+
 function clearBackground() {
   ctx.fillStyle = "lightgreen";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
-let gameOverTextXPosition = canvas.width / 4;
-let gameOverTextYPosition = canvas.height / 2;
+let gameOverTextXPosition = player.x - 40;
+let gameOverTextYPosition = player.y;
 function drawGameOver() {
-  ctx.font = "54px Brush Script MT";
+  ctx.font = "28px Brush Script MT";
   ctx.fillStyle = "red";
   ctx.fillText(
-    "YOU HAVE BEEN CAPTURED",
-    gameOverTextXPosition,
+    "DEAD",
+    gameOverTextXPosition, 
     gameOverTextYPosition
   );
-  ctx.font = "32px Brush Script MT";
+  ctx.font = "16px Brush Script MT";
   ctx.fillText(
-    "(Click where you would like to respawn)",
+    "(Click to restart)",
     gameOverTextXPosition,
-    gameOverTextYPosition + 62
+    gameOverTextYPosition + 12
   );
 }
 
@@ -207,10 +228,7 @@ function drawScene() {
   updateScene();
   if (progressBar.value <= 0) {
     drawGameOver();
-    clearInterval(scoreTimer);
-    clearInterval(levelTimer);
-    clearInterval(enemyCreationTimer);
-    clearInterval(barrierCreationTimer);
+    stopTimers();
   } else {
     requestAnimationFrame(drawScene);
   }
